@@ -122,9 +122,9 @@ def train(args):
 if __name__ == "__main__":
     # コマンドライン引数の設定
     parser = argparse.ArgumentParser(description="aqualium demo")
-    parser.add_argument("--input_path", default="input/images")
-    parser.add_argument("--output_path", default="output/demo")
-    parser.add_argument("--log_path", default="output/logs")
+    parser.add_argument("--input_path", default="/kqi/input/images")
+    parser.add_argument("--output_path", default="/kqi/output/demo")
+    parser.add_argument("--log_path", default="/kqi/output/logs")
     args = parser.parse_args()
 
     os.makedirs(args.output_path, exist_ok=True)
