@@ -44,7 +44,7 @@ def build_model(num_class) -> Sequential:
     model.compile(
         loss="sparse_categorical_crossentropy",
         optimizer=adam,
-        metrics="accuracy",
+        metrics=["accuracy"],
     )
 
     return model
@@ -56,14 +56,11 @@ def train(args):
 
     # データ読み込み
     path = pathlib.Path(f"{args.input_path}")
-    all_labels = [item.name for item in path.glob("*") if item.is_dir()]
-    label_index = {label: idx for idx, label in enumerate(all_labels)}
     all_image_paths = [
         glob.glob(f"{args.input_path}/**/{item.parent.name}/{item.name}")[0]
         for item in path.glob("**/*")
         if item.is_file()
     ]
-
     all_images = np.array(
         [
             transform.resize(io.imread(path, as_gray=True), (28, 28))
@@ -71,9 +68,10 @@ def train(args):
         ]
     )
     all_images = np.reshape(all_images, (-1, 28, 28, 1))
-    all_labels = np.array(
-        [label_index[pathlib.Path(path).parent.name] for path in all_image_paths]
-    )
+    all_labels = [pathlib.Path(path).parent.name for path in all_image_paths]
+    labels = list(set(all_labels))
+    label_index = {label: idx for idx, label in enumerate(labels)}
+    all_labels = np.array([label_index[label] for label in all_labels])
 
     # data generator の宣言
     train_datagen = ImageDataGenerator(
