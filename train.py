@@ -44,7 +44,7 @@ def build_model(num_class) -> Sequential:
     model.compile(
         loss="sparse_categorical_crossentropy",
         optimizer=adam,
-        metrics="accuracy",
+        metrics=["accuracy"],
     )
 
     return model
@@ -59,7 +59,7 @@ def train(args):
     all_labels = [item.name for item in path.glob("*") if item.is_dir()]
     label_index = {label: idx for idx, label in enumerate(all_labels)}
     all_image_paths = [
-        f"{args.input_path}/{item.parent.name}/{item.name}"
+        glob.glob(f"{args.input_path}/**/{item.parent.name}/{item.name}")[0]
         for item in path.glob("**/*")
         if item.is_file()
     ]
