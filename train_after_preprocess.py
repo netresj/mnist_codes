@@ -38,7 +38,7 @@ def build_model(num_class) -> Sequential:
     model.compile(
         loss="sparse_categorical_crossentropy",
         optimizer=adam,
-        metrics="accuracy",
+        metrics=["accuracy"],
     )
 
     return model
