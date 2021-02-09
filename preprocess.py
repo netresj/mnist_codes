@@ -18,14 +18,15 @@ from sklearn.model_selection import train_test_split
 def preprocessing(args):
     # データ読み込み
     path = pathlib.Path(f"{args.input_path}")
-    all_labels = [item.name for item in path.glob("*") if item.is_dir()]
-    label_index = {label: idx for idx, label in enumerate(all_labels)}
     all_image_paths = [
         glob.glob(f"{args.input_path}/**/{item.parent.name}/{item.name}")[0]
         for item in path.glob("**/*")
         if item.is_file()
     ]
 
+    all_labels = [item.name for item in path.glob("*/*") if item.is_dir()]
+    label_index = {label: idx for idx, label in enumerate(all_labels)}
+    
     # テストデータと学習データの分割
     test_image_paths, train_image_paths = train_test_split(all_image_paths)
     img_id = 0
