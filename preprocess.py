@@ -1,17 +1,14 @@
 # -*- coding:utf-8 -*-
 
 import argparse
-import datetime
 import glob
 import os
 import pathlib
-import zipfile
-import pandas as pd
+import pickle
 
-from tqdm import tqdm
 import numpy as np
+import pandas as pd
 from skimage import io, transform
-
 from sklearn.model_selection import train_test_split
 
 
@@ -24,34 +21,41 @@ def preprocessing(args):
         if item.is_file()
     ]
 
-    all_labels = [item.name for item in path.glob("*/*") if item.is_dir()]
-    label_index = {label: idx for idx, label in enumerate(all_labels)}
-    
     # テストデータと学習データの分割
-    test_image_paths, train_image_paths = train_test_split(all_image_paths)
+    train_image_paths, test_image_paths = train_test_split(all_image_paths)
     img_id = 0
 
-    label_filename_lst = []
-    for path in tqdm(train_image_paths):
-        img = io.imread(path, as_gray=True)
-        img = transform.resize(img, (28, 28))
-        io.imsave(f"{args.output_path}/{img_id}.png", img * 255)
-        label = pathlib.Path(path).parent.name
-        label_filename_lst.append([f"{img_id}.png", label, label_index[label]])
-        img_id += 1
-    df = pd.DataFrame(label_filename_lst, columns=["file_name", "label", "label_id"])
-    df.to_csv(f"{args.output_path}/train.csv", index=False)
+    # 画像データの読み込み
+    X_train = np.array(
+        [
+            transform.resize(io.imread(path, as_gray=True), (28, 28))
+            for path in train_image_paths
+        ]
+    )
+    X_train = np.reshape(X_train, (-1, 28, 28, 1))
+    y_train = [pathlib.Path(path).parent.name for path in train_image_paths]
 
-    label_filename_lst = []
-    for path in tqdm(test_image_paths):
-        img = io.imread(path, as_gray=True)
-        img = transform.resize(img, (28, 28))
-        io.imsave(f"{args.output_path}/{img_id}.png", img * 255)
-        label = pathlib.Path(path).parent.name
-        label_filename_lst.append([f"{img_id}.png", label, label_index[label]])
-        img_id += 1
-    df = pd.DataFrame(label_filename_lst, columns=["file_name", "label", "label_id"])
-    df.to_csv(f"{args.output_path}/test.csv", index=False)
+    X_test = np.array(
+        [
+            transform.resize(io.imread(path, as_gray=True), (28, 28))
+            for path in test_image_paths
+        ]
+    )
+    X_test = np.reshape(X_test, (-1, 28, 28, 1))
+    y_test = [pathlib.Path(path).parent.name for path in test_image_paths]
+
+    # ラベルの変換
+    all_labels = list(set(y_train) & set(y_test))
+    label_index = {label: idx for idx, label in enumerate(all_labels)}
+    y_train = np.array([label_index[label] for label in y_train])
+    y_test = np.array([label_index[label] for label in y_test])
+
+    # pickle として保存
+    with open(f"{args.output_path}/train_test_datas.pkl", "bw") as f:
+        pickle.dump(((X_train, y_train), (X_test, y_test)), f)
+
+    with open(f"{args.output_path}/labels_idx.pkl", "bw") as f:
+        pickle.dump(label_index, f)
 
 
 if __name__ == "__main__":

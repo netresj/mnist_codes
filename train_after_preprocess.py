@@ -1,26 +1,20 @@
 # -*- coding:utf-8 -*-
 
 import argparse
-import datetime
 import glob
 import os
-import pathlib
-import zipfile
+import pickle
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from skimage import io, transform
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
-from tensorflow.keras.backend import clear_session
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, TensorBoard
 from tensorflow.keras.layers import Conv2D, Dense, Dropout, Flatten, MaxPool2D
-from tensorflow.keras.metrics import categorical_accuracy, categorical_crossentropy
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tqdm import tqdm
 
 
 def build_model(num_class) -> Sequential:
@@ -55,31 +49,10 @@ def train(args):
     tf.random.set_seed(0)
 
     # データ読み込み
-    train_csv_path = glob.glob(f"{args.input_path}/**/train.csv")[0]
-    df_train = pd.read_csv(train_csv_path)
-    test_csv_path = glob.glob(f"{args.input_path}/**/test.csv")[0]
-    df_test = pd.read_csv(test_csv_path)
-    X_train = np.array(
-        [
-            io.imread(glob.glob(f"{args.input_path}/**/{file_name}")[0])
-            for file_name in df_train["file_name"]
-        ]
-    )
-    X_train = np.reshape(X_train, (-1, 28, 28, 1))
-    X_train = X_train / 255
-    X_test = np.array(
-        [
-            io.imread(glob.glob(f"{args.input_path}/**/{file_name}")[0])
-            for file_name in df_test["file_name"]
-        ]
-    )
-    X_test = np.reshape(X_test, (-1, 28, 28, 1))
-    X_test = X_test / 255
-    y_train = df_train["label_id"].values
-    y_test = df_test["label_id"].values
-
-    all_labels = pd.concat([df_test, df_train])["label"].unique()
-    label_index = {label: idx for idx, label in enumerate(all_labels)}
+    with open(glob.glob(f"{args.input_path}/**/train_test_datas.pkl")[0], "br") as f:
+        (X_train, y_train), (X_test, y_test) = pickle.load(f)
+    with open(glob.glob(f"{args.input_path}/**/labels_idx.pkl")[0], "br") as f:
+        label_index = pickle.load(f)
 
     # data generator の宣言
     train_datagen = ImageDataGenerator(
