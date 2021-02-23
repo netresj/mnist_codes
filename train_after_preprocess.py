@@ -94,6 +94,32 @@ def train(args):
     cm = pd.DataFrame(cm, columns=label_index.keys(), index=label_index.keys())
     cm.to_csv(f"{args.output_path}/confusion_matrix.csv")
 
+    # confusion matrixの作成
+    y_pred = np.argmax(model.predict(X_test), axis=-1)
+    cm = confusion_matrix(y_test, y_pred, labels=list(label_index.values()))
+    cm = pd.DataFrame(cm, columns=label_index.keys(), index=label_index.keys())
+    cm.to_csv(f"{args.output_path}/confusion_matrix.csv")
+
+    # tensorboard への画像の出力
+    writer = tf.summary.create_file_writer(f"{args.log_path}/images")
+
+    # 各クラスについて間違えた画像のみを10枚ずつ収集してtensorboardで表示する
+    wrong_pictures_idx = [
+        idx for idx in range(len(y_pred)) if y_pred[idx] != y_test[idx]
+    ]
+
+    for image_idx in wrong_pictures_idx[:20]:
+        true_label = [
+            key for key, val in label_index.items() if val == y_test[image_idx]
+        ]
+        predicted_label = [
+            key for key, val in label_index.items() if val == y_pred[image_idx]
+        ]
+        title = f"true {true_label}: predicted {predicted_label}"
+
+        with writer.as_default(step=100):
+            tf.summary.image(title, X_test[image_idx : image_idx + 1], max_outputs=1)
+
 
 if __name__ == "__main__":
     # コマンドライン引数の設定

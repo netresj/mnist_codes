@@ -28,7 +28,9 @@ def preprocessing(args):
     # 画像データの読み込み
     X_train = np.array(
         [
-            transform.resize(io.imread(path, as_gray=True), (28, 28))
+            transform.resize(
+                io.imread(path, as_gray=True), (28, 28), anti_aliasing=False
+            )
             for path in train_image_paths
         ]
     )
@@ -37,7 +39,9 @@ def preprocessing(args):
 
     X_test = np.array(
         [
-            transform.resize(io.imread(path, as_gray=True), (28, 28))
+            transform.resize(
+                io.imread(path, as_gray=True), (28, 28), anti_aliasing=False
+            )
             for path in test_image_paths
         ]
     )

@@ -10,6 +10,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from skimage import io, transform
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
@@ -63,7 +64,9 @@ def train(args):
     ]
     all_images = np.array(
         [
-            transform.resize(io.imread(path, as_gray=True), (28, 28))
+            transform.resize(
+                io.imread(path, as_gray=True), (28, 28), anti_aliasing=False
+            )
             for path in tqdm(all_image_paths)
         ]
     )
@@ -116,6 +119,26 @@ def train(args):
     cm = confusion_matrix(y_test, y_pred, labels=list(label_index.values()))
     cm = pd.DataFrame(cm, columns=label_index.keys(), index=label_index.keys())
     cm.to_csv(f"{args.output_path}/confusion_matrix.csv")
+
+    # tensorboard への画像の出力
+    writer = tf.summary.create_file_writer(f"{args.log_path}/images")
+
+    # 各クラスについて間違えた画像のみを10枚ずつ収集してtensorboardで表示する
+    wrong_pictures_idx = [
+        idx for idx in range(len(y_pred)) if y_pred[idx] != y_test[idx]
+    ]
+
+    for image_idx in wrong_pictures_idx[:20]:
+        true_label = [
+            key for key, val in label_index.items() if val == y_test[image_idx]
+        ]
+        predicted_label = [
+            key for key, val in label_index.items() if val == y_pred[image_idx]
+        ]
+        title = f"true {true_label}: predicted {predicted_label}"
+
+        with writer.as_default(step=100):
+            tf.summary.image(title, X_test[image_idx : image_idx + 1], max_outputs=1)
 
 
 if __name__ == "__main__":
