@@ -117,8 +117,8 @@ def train(args):
         ]
         title = f"true {true_label}: predicted {predicted_label}"
 
-        with writer.as_default(step=100):
-            tf.summary.image(title, X_test[image_idx : image_idx + 1], max_outputs=1)
+        with writer.as_default():
+            tf.summary.image(title, X_test[image_idx : image_idx + 1], step=100, max_outputs=1)
 
 
 if __name__ == "__main__":
